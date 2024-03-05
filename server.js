@@ -2,8 +2,8 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import mongoose, { mongo } from "mongoose";
-import Products from "./product.js";
-import User from "./user.js";
+import Products from "./models/product.js";
+import User from "./models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
@@ -41,23 +41,24 @@ app.post("/register", async (req, res) => {
   try {
     // console.log(req.body);
     const { name, email, password } = req.body;
-    // if (!(name && email && password)) {
-    //   res.status(400).send("All fields are compulsory");
-    // }
-    // const existinguser = await User.findOne({ email });
-    // if (existinguser) {
-    //   res.status(400).send("User already exists");
-    // }
+    if (!(name && email && password)) {
+      res.status(400).send("All fields are compulsory");
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).send({ message: "User already exists" });
+    }
     const encrptpassword = await bcrypt.hash(password, 10);
     const newuser = new User({
       name,
       email,
       password: encrptpassword,
     });
-    const token = jwt.sign({ id: newuser._id, email }, "shhhh", {
-      expiresIn: "2h",
-    });
-    newuser.token = token;
+    // const token = jwt.sign({ id: newuser._id, email }, "shhhh", {
+    //   expiresIn: "2h",
+    // });
+    // newuser.token = token;
     newuser.save();
     res.status(200).send("User registered successfully");
   } catch (error) {
