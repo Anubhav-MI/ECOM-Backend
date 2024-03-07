@@ -4,6 +4,7 @@ import cors from "cors";
 import mongoose, { mongo } from "mongoose";
 import Products from "./models/product.js";
 import User from "./models/user.js";
+import Category from "./models/category.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
@@ -35,6 +36,37 @@ app.get("/userdetails", (req, res) => {
     .catch((err) => {
       res.status(500).send(err);
     });
+});
+
+//get category
+
+app.get("/getcategory", (req, res) => {
+  Category.find()
+    .then((data) => {
+      res.status(200).send(data);
+    })
+    .catch((err) => {
+      res.status(500).send(err);
+    });
+});
+
+//add actegory
+app.post("/createcategory", async (req, res) => {
+  const { name } = req.body;
+  try {
+    if (!name) {
+      return res.status(400).json({ error: "Category name is required" });
+    }
+    console.log(name);
+    const newCategory = new Category(req.body);
+
+    await newCategory.save();
+
+    res.status(200).json({ status: "ok", message: "Category created" });
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 //add products
