@@ -27,6 +27,17 @@ app.get("/products/get", (req, res) => {
       res.status(500).send(err);
     });
 });
+app.get("/userdetails", (req, res) => {
+  User.find()
+    .then((data) => {
+      res.status(200).send(data);
+    })
+    .catch((err) => {
+      res.status(500).send(err);
+    });
+});
+
+//add products
 
 app.post("/products/add", (req, res) => {
   const ProductDetails = req.body;
@@ -36,6 +47,31 @@ app.post("/products/add", (req, res) => {
   res.status(200).send("Received");
   console.log("Received data", newproduct);
 });
+
+//delete products
+
+app.post("/products/deleteproduct", async (req, res) => {
+  const id = req.body;
+  console.log(id);
+  try {
+    if (!id) {
+      res.status(400).send({ status: "failed", data: "error deleting" });
+    }
+    const deletionResult = await Products.deleteOne({ _id: id });
+
+    if (deletionResult.deletedCount === 0) {
+      return res
+        .status(404)
+        .send({ status: "failed", data: "Error: Product not found" });
+    }
+
+    res.status(200).send({ data: "Product deleted successfully" });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// register users
 
 app.post("/register", async (req, res) => {
   try {
@@ -61,6 +97,29 @@ app.post("/register", async (req, res) => {
     // newuser.token = token;
     newuser.save();
     res.status(200).send("User registered successfully");
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+//delete users
+
+app.post("/deleteusers", async (req, res) => {
+  const id = req.body;
+  console.log(id);
+  try {
+    if (!id) {
+      res.status(400).send({ status: "failed", data: "error deleting" });
+    }
+    const deletionResult = await User.deleteOne({ _id: id });
+
+    if (deletionResult.deletedCount === 0) {
+      return res
+        .status(404)
+        .send({ status: "failed", data: "Error: User not found" });
+    }
+
+    res.status(200).send({ data: "User deleted successfully" });
   } catch (error) {
     console.log(error);
   }

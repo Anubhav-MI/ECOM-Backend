@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
 const CategorySchema = mongoose.Schema({
-  Category: { type: String, unique: true },
+  Category: { name: { type: String, unique: true, required: true } },
 });
 export default Catgeory = mongoose.model("Category", CategorySchema);
