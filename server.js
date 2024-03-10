@@ -4,11 +4,14 @@ import cors from "cors";
 import mongoose, { mongo } from "mongoose";
 import Products from "./models/product.js";
 import User from "./models/user.js";
+import orderModel from "./models/orderModel.js";
 import Category from "./models/category.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
-
+import braintree from "braintree";
+import dotenv from "dotenv";
+dotenv.config();
 const app = express();
 app.use(cookieParser());
 const port = 3001;
@@ -48,6 +51,22 @@ app.get("/getcategory", (req, res) => {
     .catch((err) => {
       res.status(500).send(err);
     });
+});
+
+app.get("/order", async (req, res) => {
+  try {
+    // console.log(req);
+    const orders = await orderModel
+      .find({ buyer: req.user._id })
+      .populate("products")
+      .populate("buyer", "name");
+    res.json(orders);
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ success: false, message: "Error while getting orders" });
+  }
 });
 
 //add actegory
@@ -187,6 +206,66 @@ app.post("/login", async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).send("Internal Server Error");
+  }
+});
+
+//payment gateway
+
+var gateway = new braintree.BraintreeGateway({
+  environment: braintree.Environment.Sandbox,
+  merchantId: process.env.BRAINTREE_MERCHANT_ID,
+  publicKey: process.env.BRAINTREE_PUBLIC_KEY,
+  privateKey: process.env.BRAINTREE_PRIVATE_KEY,
+});
+
+//token
+app.get("/braintree/token", (req, res) => {
+  try {
+    gateway.clientToken.generate({}, function (err, response) {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(response);
+      }
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+//payment
+app.post("/braintree/payment", (req, res) => {
+  try {
+    const { cart, nonce, buyer } = req.body;
+    // console.log(cart);
+    // console.log(buyer);
+    let total = 0;
+    cart.map((i) => {
+      total += i.price;
+    });
+    let newTransaction = gateway.transaction.sale(
+      {
+        amount: total,
+        paymentMethodNonce: nonce,
+        options: {
+          submitForSettlement: true,
+        },
+      },
+      function (error, result) {
+        if (result) {
+          const order = new orderModel({
+            products: cart,
+            payment: result,
+            buyer: buyer,
+          }).save();
+          res.json({ ok: true });
+        } else {
+          res.status(500).send(error);
+        }
+      }
+    );
+  } catch (err) {
+    console.log(err);
   }
 });
 
