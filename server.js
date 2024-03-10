@@ -53,11 +53,10 @@ app.get("/getcategory", (req, res) => {
     });
 });
 
-app.get("/order", async (req, res) => {
+app.get("/getallorder", async (req, res) => {
   try {
-    // console.log(req);
     const orders = await orderModel
-      .find({ buyer: req.user._id })
+      .find()
       .populate("products")
       .populate("buyer", "name");
     res.json(orders);
@@ -66,6 +65,39 @@ app.get("/order", async (req, res) => {
     res
       .status(500)
       .send({ success: false, message: "Error while getting orders" });
+  }
+});
+
+app.post("/order", async (req, res) => {
+  try {
+    const { buyer } = req.body;
+    const orders = await orderModel
+      .find({ buyer: buyer })
+      .populate("products")
+      .populate("buyer", "name");
+    res.json(orders);
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ success: false, message: "Error while getting orders" });
+  }
+});
+
+//update order status
+
+app.put("/order-status/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    const order = await orderModel.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    );
+    res.json(order);
+  } catch (err) {
+    console.log(err);
   }
 });
 
