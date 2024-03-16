@@ -14,11 +14,10 @@ import dotenv from "dotenv";
 dotenv.config();
 const app = express();
 app.use(cookieParser());
-const port = 3001;
+const port = process.env.PORT || 3001;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-mongoose.connect(
-  "mongodb+srv://anubhavmi:test123@cluster0.telzkjw.mongodb.net/ECOM"
-);
+mongoose.connect(DATABASE_URL);
 app.use(bodyParser.json());
 app.use(cors());
 
